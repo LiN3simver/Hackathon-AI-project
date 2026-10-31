@@ -1,0 +1,9 @@
+# Reviewed interface preview
+
+`guardian-demo-redacted.png` is an AI-redacted derivative of a user-supplied interface screenshot, prepared with the built-in `imagegen` tool for public documentation. The display name was replaced with a generic label and the entire vehicle reference photograph was replaced with an opaque placeholder. It illustrates the interface, not model accuracy or live deployment availability.
+
+The original screenshot is excluded. The reviewed PNG contains no EXIF or text metadata chunks. The release gate pins its SHA-256 digest; replacing it requires another visual privacy review and an intentional digest update. Other photographs, screenshots, and model artifacts remain excluded.
+
+## Editing prompt
+
+> Use case: precise-object-edit. Edit target: the attached Guardian application screenshot. Asset type: privacy-redacted GitHub README interface preview. Preserve the screenshot's full wide composition, red/white palette, all Chinese UI text, typography, exact panels and controls as faithfully as possible. Make only these two redactions: (1) erase the logged-in person's name at the top right and replace it with the generic text 'Demo' in the same font and position; (2) completely remove every pixel of the real automobile photograph inside the right-hand reference card, including the vehicle, parking garage, logos and any identifiers; replace only that photo area with an opaque flat pale-gray UI placeholder containing a small neutral camera outline and the exact centered English label 'Reference image omitted'. The rest of that card, its border, headings and captions must stay as in the screenshot. The image must contain no actual vehicle photograph, no personal names, no license plate values, no QR code, no private data. Do not invent new UI features, metrics, people or scenery. Keep the rest of the screenshot unchanged. This is an intentional public documentation redaction, not a redesign.

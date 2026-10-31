@@ -1,0 +1,20 @@
+{
+  "name": "guardian",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "apps/ops"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace apps/web run dev",
+    "build:web": "npm --workspace apps/web run build",
+    "lint:web": "npm --workspace apps/web run lint",
+    "dev:ops": "npm --workspace apps/ops run dev",
+    "build:ops": "npm --workspace apps/ops run build",
+    "lint:ops": "npm --workspace apps/ops run lint"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

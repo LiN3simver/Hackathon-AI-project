@@ -1,0 +1,8 @@
+# GPU wheels come from the official PyTorch CUDA index; install via scripts/setup.ps1.
+torch==2.7.0
+torchvision==0.22.0
+# Optional damage-pair backbones (install after torch, see scripts/setup.ps1).
+timm==1.0.30
+transformers==5.17.0
+# Trains the hand-shake blur classifier (scripts/train_blur_detector.py); inference needs only NumPy.
+scikit-learn==1.9.1
