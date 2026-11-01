@@ -79,7 +79,7 @@ def inspect(relative: Path, content: bytes) -> list[str]:
         or relative.name.startswith("test_")
     ):
         findings.append(f"{name}: private artifact or test material")
-    if relative.parts[0] in {"data", "models", "logs"} and relative.name not in {"README.md", ".gitkeep"}:
+    if relative.parts[0] in {"data", "models", "logs"} and relative.name not in {"README.md", "README.zh-TW.md", ".gitkeep"}:
         findings.append(f"{name}: runtime artifact")
     try:
         source = content.decode("utf-8-sig")
@@ -87,8 +87,8 @@ def inspect(relative: Path, content: bytes) -> list[str]:
         return [*findings, f"{name}: non-text file"]
     if "\x00" in source:
         findings.append(f"{name}: binary content")
-    if relative.suffix.lower() == ".md" and re.search(r"[\u3400-\u9fff]", source):
-        findings.append(f"{name}: Markdown must be in English")
+    if relative.suffix.lower() == ".md" and not relative.name.endswith(".zh-TW.md") and re.search(r"[\u3400-\u9fff]", source):
+        findings.append(f"{name}: Chinese Markdown must use the .zh-TW.md suffix")
     for number, line in enumerate(source.splitlines(), 1):
         for category, pattern in PATTERNS.items():
             for match in pattern.finditer(line):

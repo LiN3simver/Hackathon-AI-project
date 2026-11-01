@@ -1,6 +1,17 @@
 # System architecture
 
-Guardian separates interactive capture from slow inference. The API owns validation and state transitions; a separate worker consumes durable jobs. Both frontends use the same typed API boundary.
+English | [Traditional Chinese](architecture.zh-TW.md)
+
+Guardian's architecture addresses three engineering problems: keeping capture responsive during slow inference, recovering interrupted analysis, and making history answers traceable to records. The API owns validation and state transitions; a separate worker consumes durable jobs. Both frontends use the same typed API boundary.
+
+## Design rationale
+
+| Problem | Design choice | Consequence |
+| --- | --- | --- |
+| Inference can outlast an interactive request | Separate capture validation from queued analysis | The UI needs to represent pending and review states |
+| A worker may stop or return late | Persist job ownership, heartbeats, and attempt guards | Recovery must distinguish the current attempt from stale work |
+| Model text can drift from stored facts | Calculate answer cards before generating summaries | Summaries depend on a bounded evidence and verification layer |
+| A local workflow needs a compact persistence layer | SQLite WAL and private files | Multi-host operation requires a different coordination and storage design |
 
 ## Runtime components
 
@@ -103,3 +114,9 @@ Runtime settings may override environment defaults after initialization. Review 
 ## Operational limits
 
 The current topology targets one host with local storage. A multi-host deployment would need shared object storage, database coordination, worker leasing, and a managed delivery mechanism. Local development HTTPS and process helpers do not provide a complete production security or availability design.
+
+## Code walkthrough
+
+Start with [inspection analysis](../apps/api/app/services/inspection_analysis.py) for worker orchestration, then [queue storage](../apps/api/app/services/operations_store.py) for persisted state and attempt guards. For the query path, read [answer preparation and streaming](../apps/api/app/services/history_answer.py) alongside [summary verification](../apps/api/app/services/history_llm.py).
+
+[Project overview](../README.md) · [Data lifecycle](data-lifecycle.md) · [Model pipeline](model-pipeline.md)

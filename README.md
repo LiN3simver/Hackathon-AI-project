@@ -1,8 +1,16 @@
 # Guardian
 
-A local-first vehicle inspection system that connects guided image capture, asynchronous computer vision, human review, and evidence-backed operational queries.
+English | [Traditional Chinese](README.zh-TW.md)
 
-This public source edition focuses on architecture and reusable engineering code. Operational databases, vehicle identifiers, photographs, private datasets, trained checkpoints, experiment reports, and test fixtures are excluded. The user interface currently uses Traditional Chinese; the engineering documentation is in English.
+A vehicle inspection project that brings guided capture, computer vision, human review, and inspection-history queries into one workflow.
+
+Guardian explores how AI-assisted inspection can fit into a rental vehicle's pickup and return process. The implementation spans two React clients, a FastAPI backend, a durable analysis worker, and offline model tooling. The interface uses Traditional Chinese; documentation is available in English and Traditional Chinese.
+
+## Problem and project goal
+
+Vehicle inspection involves collecting comparable photos, finding changes between pickup and return, reviewing uncertain findings, and tracing a decision back to its evidence. Connecting those steps is the central design problem of this project.
+
+The goal is to support that workflow while keeping capture responsive, model uncertainty visible, and operational answers tied to source records.
 
 ## Visual preview
 
@@ -10,7 +18,15 @@ This public source edition focuses on architecture and reusable engineering code
 
 AI-redacted interface preview: the display name and vehicle reference photograph were replaced for public documentation.
 
-## Key features
+## Implemented workflow
+
+1. **Capture:** guide the user through required views and validate image quality and rental identity on the server.
+2. **Analyze:** pair pickup and return evidence and run vision tasks in a separate background worker.
+3. **Review:** route uncertain findings to staff and retain the decision alongside its source records.
+4. **Query:** build history answer cards from operational records and optionally add a verified language-model summary.
+5. **Improve:** collect task-specific reviewed labels for separate offline training and evaluation.
+
+## Implementation highlights
 
 - **Guided capture:** server-validated image quality, expected view, scene, and authorized rental identity.
 - **Durable background analysis:** persisted jobs, worker heartbeats, retry handling, and recovery after interrupted attempts.
@@ -18,7 +34,7 @@ AI-redacted interface preview: the display name and vehicle reference photograph
 - **Evidence-backed history assistant:** deterministic answer cards with an optional verified, streamed language-model summary.
 - **Model improvement pipeline:** task-specific labels, grouped evaluation splits, candidate comparison, and guarded promotion.
 
-## Architecture
+## System overview
 
 ```mermaid
 flowchart LR
@@ -36,7 +52,7 @@ flowchart LR
     Answers --> LLM[Optional verified LLM summary]
 ```
 
-The diagram shows the application flow without operational data. AI results support review; they do not establish liability or authorize charges.
+The API coordinates state, the worker handles inference, and human review closes uncertain cases. AI results support review; they do not establish liability or authorize charges.
 
 | Area | Source | Responsibility |
 | --- | --- | --- |
@@ -59,7 +75,7 @@ Read [system architecture](docs/architecture.md), [data lifecycle](docs/data-lif
 | Optional generation | Ollama or configured compatible text backend, evidence verification, server-sent events |
 | Source checks | GitHub Actions, Python compilation, heuristic release gate, TypeScript and Vite builds |
 
-## Engineering challenges
+## Engineering challenges and solutions
 
 | Challenge | Implemented approach | Source |
 | --- | --- | --- |
@@ -68,11 +84,26 @@ Read [system architecture](docs/architecture.md), [data lifecycle](docs/data-lif
 | Generated summaries can contradict operational records | Calculate answer cards in code, build a bounded evidence pack, and verify summary sentences before streaming them | [Answer pipeline](apps/api/app/services/history_answer.py), [summary verifier](apps/api/app/services/history_llm.py) |
 | Related images can leak across evaluation splits | Validate vehicle-disjoint manifests, exclude evaluation groups when adding training samples, and compare candidates against promotion gates | [View training](scripts/train_dinov2_view_classifier.py), [training policy](apps/api/app/services/training_automation.py) |
 
-Background processing keeps long inference away from the capture interaction. Feature caching, task-specific adapters, and optional localization reduce repeated or unnecessary work. These are optimization mechanisms; no independently verified latency or accuracy benchmark is published with this edition.
+Background processing keeps long inference away from the capture interaction. Feature caching and task-specific adapters reduce repeated work; localization can be enabled when needed. Measured performance remains a separate evaluation task.
+
+## Design decisions and tradeoffs
+
+| Decision | Reason | Tradeoff |
+| --- | --- | --- |
+| Local processing and private image storage | Keep inspection evidence within the configured host | Model dependencies and storage must be provisioned locally |
+| SQLite WAL and a separate worker | Persist job state with a compact single-host setup | Multi-host execution requires database and storage changes |
+| Human review for uncertain results | Preserve a decision path when models fail or disagree | Some inspections still require staff time |
+| Answer cards before generated summaries | Return calculated results even when the LLM is unavailable | Summary content is constrained by available evidence and verification rules |
+
+## Scope and current limits
+
+This portfolio includes application source, model integration, training tools, architecture notes, and a sanitized interface preview. Operational records, photographs, trained checkpoints, private datasets, and evaluation reports are not included.
+
+There is no hosted demo or published accuracy, latency, or coverage result. A full inspection requires separately supplied model artifacts and authorized data. The current topology targets a single host; production deployment needs additional security, monitoring, backup, and retention work.
 
 ## Local demonstration
 
-Run the application locally with your own authorized inputs. There is no hosted demonstration, bundled photo gallery, or preloaded rental dataset.
+To explore the implementation locally, provide your own authorized inputs and compatible model artifacts.
 
 Prerequisites: Windows PowerShell, Git, Python 3.13, and Node.js 22 or later. Backend runtime requires PyTorch. Ollama is optional for generated summaries and vision-language localization.
 
@@ -94,16 +125,7 @@ Before starting the API and worker, install the model runtime dependencies:
 
 CPU is the default; `-TorchVariant cu126` selects the supported CUDA wheels when used with `-WithModels`. Downloads require network access and review of upstream licenses. Task-specific checkpoints must be supplied separately; see [model artifacts](models/README.md).
 
-The development helper starts the API, worker, and both frontends on loopback interfaces. For separate terminals, activate the project environment and use:
-
-```powershell
-python -m uvicorn app.main:app --app-dir apps/api --host 127.0.0.1 --port 8000
-python scripts/run_inspection_worker.py
-npm run dev:web
-npm run dev:ops
-```
-
-Run each command in a separate terminal. The capture client uses local HTTPS for camera access; check the browser's local certificate prompt before using the camera.
+The development helper starts the API, worker, and both frontends on loopback interfaces. The capture client uses local HTTPS for camera access; check the browser's local certificate prompt before using the camera.
 
 | Service | Local address |
 | --- | --- |
@@ -115,7 +137,7 @@ Run each command in a separate terminal. The capture client uses local HTTPS for
 
 A complete inspection requires compatible model artifacts and authorized data supplied separately. Readiness checks expose missing dependencies; capture checks may require those assets before accepting a photo. Worker model failures and timeouts route work to review. History queries retain deterministic answer cards when optional LLM generation is unavailable.
 
-## Validation and contributions
+## Source validation
 
 ```powershell
 .\scripts\verify.ps1
@@ -125,12 +147,20 @@ The helper checks staged Git content for common private-artifact and identifier 
 
 The [GitHub Actions workflow](.github/workflows/source-checks.yml) runs the index check, Python compilation, and both frontend builds. It does not deploy a service, run a full backend lint suite, report test coverage, or validate model accuracy. Behavioral and model evaluation require a separately managed, authorized dataset.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, change review, and commit conventions.
+## Further reading
 
-## Deployment and licensing
+| Document | What it explains |
+| --- | --- |
+| [System architecture](docs/architecture.md) | Component boundaries, job recovery, and history-query design |
+| [Data lifecycle](docs/data-lifecycle.md) | Evidence traceability, access boundaries, and retention |
+| [Model pipeline](docs/model-pipeline.md) | Task-specific inference, evaluation, and model activation |
 
-This is a local engineering reference, not a production deployment package. Production use requires managed secrets, trusted TLS, access controls, request limits, backups, monitoring, and an explicit retention policy. Distributed workers require a deliberate database and object-storage migration.
+## Future work
 
-Images are stored privately and served through authorized application routes. Optional external text-model backends receive query text and selected textual evidence when configured. Keep operational data, credentials, model artifacts, generated outputs, and local environment files outside the public repository.
+- Establish an authorized evaluation set and measure per-task quality, review rate, and end-to-end latency.
+- Add behavioral checks for recovery, authorization boundaries, and summary verification.
+- Plan shared storage and coordinated job ownership before moving to multiple hosts.
+
+## Licensing
 
 A project license has not been selected. Third-party dependencies and model artifacts retain their own terms; this repository does not grant rights to excluded training data or third-party artifacts.

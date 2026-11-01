@@ -1,8 +1,19 @@
 # Data lifecycle and traceability
 
-The repository publishes code and architecture. Runtime data belongs in a separate access-controlled environment. No operational records, photographs, trained checkpoints, or historical evaluation material are supplied with this edition.
+English | [Traditional Chinese](data-lifecycle.zh-TW.md)
 
-## Data ownership
+An inspection result needs context: which image was analyzed, which job produced the finding, and who confirmed the decision. Guardian links those records so review and history queries can follow the same evidence chain.
+
+This document explains that data design and the boundary between the portfolio's source code and private runtime information.
+
+## Design focus
+
+- **Traceability:** connect images, jobs, cases, and events through identifiers.
+- **Separate observations from decisions:** preserve model findings and human actions as distinct records.
+- **Controlled access:** serve private images through authorized application routes.
+- **Task-specific learning:** keep reviewed labels attached to their source and intended task.
+
+## Data scope
 
 | Data | Runtime purpose | Public repository policy |
 | --- | --- | --- |
@@ -53,8 +64,14 @@ The application has retention handling for operational activity records. Configu
 
 Back up SQLite using a consistent database backup method. Coordinate image and database backups so restored object references resolve. A Git checkout does not restore runtime files or model artifacts.
 
-## Publishing derived artifacts
+## Portfolio presentation
 
-Treat generated reports, contact sheets, embeddings, copied manifests, screenshot captures, and model metadata as potential data-bearing outputs. Review their contents before sharing. The explicitly reviewed [sanitized interface preview](assets/guardian-demo-redacted.png) is the only screenshot included in this edition: its display name and vehicle reference photograph were replaced for public documentation. Original image inputs and other screenshots remain excluded. Training output should record provenance in the private model registry; public documentation should describe methods without carrying operational samples or unsupported accuracy claims.
+The portfolio demonstrates the flow through source code, diagrams, and a [sanitized interface preview](assets/guardian-demo-redacted.png). The preview replaces the display name and vehicle reference photograph. Operational samples, original screenshots, generated reports, embeddings, and private model metadata are not included. This keeps the design inspectable without publishing inspection evidence.
 
 External text-model backends, when explicitly configured, receive the query and selected textual evidence. Review that evidence scope before enabling such an integration. Local image processing alone does not determine the data boundary of every optional service.
+
+## Code walkthrough
+
+[Image storage](../apps/api/app/services/inspection_storage.py) defines file access, [operations storage](../apps/api/app/services/operations_store.py) connects workflow records, and [active learning](../apps/api/app/services/active_learning.py) collects reviewable samples.
+
+[Project overview](../README.md) · [System architecture](architecture.md) · [Model pipeline](model-pipeline.md)

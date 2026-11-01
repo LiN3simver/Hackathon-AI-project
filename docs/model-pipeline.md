@@ -1,6 +1,19 @@
 # Model pipeline
 
-Guardian keeps synchronous capture validation separate from background analysis and offline model improvement. Model adapters return structured results and explicit uncertainty so the workflow can preserve human review.
+English | [Traditional Chinese](model-pipeline.zh-TW.md)
+
+Guardian integrates multiple vision tasks into one inspection workflow. The engineering focus is on how model outputs become usable application states: capture validation, background findings, review decisions, and separately evaluated model updates.
+
+Synchronous capture validation, background analysis, and offline improvement have separate execution paths. Model adapters return structured results and explicit uncertainty so the workflow can preserve human review.
+
+## Design rationale
+
+| Choice | Reason | Tradeoff |
+| --- | --- | --- |
+| Task-specific adapters and prediction heads | Give view, damage, cleanliness, and OCR tasks their own contracts | Each task needs compatible artifacts and evaluation |
+| Isolated OCR subprocess | Bound recognition time and separate runtime dependencies | Adds environment provisioning and process coordination |
+| Paired pickup/return comparison | Evaluate changes against a corresponding earlier view | Depends on compatible views and image quality |
+| Separate training from activation | Require evaluation and an explicit promotion decision | Reviewed labels do not immediately change runtime behavior |
 
 ## Inference stages
 
@@ -50,7 +63,7 @@ For each candidate, keep the following in a private artifact registry:
 
 Avoid promoting on aggregate accuracy alone. Compare acceptance coverage, per-class failures, and behavior under missing views, blur, illumination changes, and near-duplicate inputs. Confidence scores are not automatically calibrated probabilities.
 
-## Retained pipeline tools
+## Training and evaluation tools
 
 | Script | Purpose and required private inputs |
 | --- | --- |
@@ -67,3 +80,9 @@ All scripts are under `scripts/`. Read their `--help` output before running them
 ## Reproducibility
 
 The repository provides source for model integration and reusable training workflows. It does not publish a benchmark result or claim that the original model can be reproduced without the excluded artifacts and data. Validate the environment, supply authorized data, train or provision compatible heads, and record your own evaluation before enabling an operational workflow.
+
+## Evaluation priorities
+
+Future evaluation should measure per-task quality, the share of cases sent to review, and latency in a recorded runtime environment. Grouped splits and failure analysis are needed before comparing candidate models. These are evaluation goals; this portfolio does not report measured results.
+
+[Project overview](../README.md) · [System architecture](architecture.md) · [Model artifacts](../models/README.md)

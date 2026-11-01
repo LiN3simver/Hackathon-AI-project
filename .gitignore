@@ -31,16 +31,19 @@ apps/*/vite.config.d.ts
 # Private runtime data, datasets and model checkpoints
 data/**
 !data/README.md
+!data/README.zh-TW.md
 logs/**
 !logs/.gitkeep
 models/**
 !models/README.md
+!models/README.zh-TW.md
 artifacts/
 outputs/
 apps/api/data/
 apps/api/logs/
 apps/web/public/reference-views/**
 !apps/web/public/reference-views/README.md
+!apps/web/public/reference-views/README.zh-TW.md
 *.sqlite*
 *.db
 *.db-*
